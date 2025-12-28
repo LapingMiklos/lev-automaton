@@ -107,14 +107,12 @@ impl Automaton<NonDeterministic> {
         active_states.insert(self.start.unwrap_or(StateId(0)));
 
         for c in word.chars() {
-            let mut eps_reachable_states = HashSet::new();
-
-            for state in &active_states {
-                self.add_eps_states(&mut eps_reachable_states, *state);
+            for state in &active_states.clone() {
+                self.add_eps_states(&mut active_states, *state);
             }
 
             let mut new_states = HashSet::new();
-            for current_state in &eps_reachable_states {
+            for current_state in &active_states {
                 for s in self[*current_state]
                     .transtions
                     .iter()
@@ -129,24 +127,14 @@ impl Automaton<NonDeterministic> {
             active_states = new_states;
         }
 
-        let mut eps_reachable_states = HashSet::new();
-
-        for state in &active_states {
-            self.add_eps_states(&mut eps_reachable_states, *state);
+        for state in &active_states.clone() {
+            self.add_eps_states(&mut active_states, *state);
         }
 
-        eps_reachable_states
-            .iter()
-            .any(|s| self.final_states.contains(s))
+        active_states.iter().any(|s| self.final_states.contains(s))
     }
 
     fn add_eps_states(&self, new_states: &mut HashSet<StateId>, current_state: StateId) {
-        if new_states.contains(&current_state) {
-            return;
-        }
-
-        new_states.insert(current_state);
-
         for s in self[current_state]
             .transtions
             .iter()
@@ -154,6 +142,9 @@ impl Automaton<NonDeterministic> {
             .map(|(_, to)| to)
             .copied()
         {
+            if !new_states.insert(s) {
+                continue;
+            }
             self.add_eps_states(new_states, s)
         }
     }
