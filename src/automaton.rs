@@ -7,7 +7,7 @@ use std::{
 type Set<T> = BTreeSet<T>;
 type Map<K, V> = BTreeMap<K, V>;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StateId(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -116,14 +116,9 @@ impl Automaton<NonDeterministic> {
             return false;
         }
 
-        let mut active_states = Set::new();
-        active_states.insert(self.start.unwrap_or(StateId(0)));
+        let mut active_states = self.eps_closure(Set::from([self.start.unwrap_or(StateId(0))]));
 
         for c in word.chars() {
-            for state in &active_states.clone() {
-                self.add_eps_states(&mut active_states, *state);
-            }
-
             let mut new_states = Set::new();
             for current_state in &active_states {
                 for s in self[*current_state]
@@ -141,39 +136,30 @@ impl Automaton<NonDeterministic> {
                 return false;
             }
 
-            active_states = new_states;
-        }
-
-        for state in &active_states.clone() {
-            self.add_eps_states(&mut active_states, *state);
+            active_states = self.eps_closure(new_states);
         }
 
         active_states.iter().any(|s| self.final_states.contains(s))
     }
 
-    fn add_eps_states(&self, new_states: &mut Set<StateId>, current_state: StateId) {
-        for s in self[current_state]
-            .transtions
-            .iter()
-            .filter(|(transition, _)| transition.is_epsilon())
-            .map(|(_, to)| to)
-            .copied()
-        {
-            if !new_states.insert(s) {
-                continue;
+    fn eps_closure(&self, mut states: Set<StateId>) -> Set<StateId> {
+        let mut new_states: Vec<StateId> = states.iter().copied().collect();
+
+        while let Some(state) = new_states.pop() {
+            for s in self[state]
+                .transtions
+                .iter()
+                .filter(|(transition, _)| transition.is_epsilon())
+                .map(|(_, to)| to)
+                .copied()
+            {
+                if states.insert(s) {
+                    new_states.push(s);
+                }
             }
-            self.add_eps_states(new_states, s)
-        }
-    }
-
-    fn eps_closure(&self, states: Set<StateId>) -> Set<StateId> {
-        let mut new_states = states.clone();
-
-        for s in states {
-            self.add_eps_states(&mut new_states, s);
         }
 
-        new_states
+        states
     }
 }
 
@@ -186,8 +172,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
         }
 
         let start_state = nfa.start.unwrap_or(StateId(0));
-        let mut new_start_state = Set::from([start_state]);
-        nfa.add_eps_states(&mut new_start_state, start_state);
+        let new_start_state = nfa.eps_closure(Set::from([start_state]));
 
         let mut state_map = Map::new();
         let mut state_stack = vec![new_start_state];
