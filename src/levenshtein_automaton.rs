@@ -1,4 +1,4 @@
-use std::{collections::HashMap, ops::Deref};
+use std::ops::Deref;
 
 use crate::automaton::{Automaton, Deterministic, NonDeterministic, StateId, Transition};
 
@@ -18,33 +18,22 @@ impl LevenshteinAutomaton<NonDeterministic> {
     pub fn new(word: &str, k: usize) -> Self {
         let mut automaton = Automaton::default();
 
-        let mut states: HashMap<(usize, usize), StateId> = HashMap::new();
         let word_len = word.chars().count();
-        for i in 0..=word_len {
-            for e in 0..=k {
-                states.insert((i, e), automaton.add_state());
-            }
-        }
+        let states: Vec<Vec<StateId>> = (0..=word_len)
+            .map(|_| (0..=k).map(|_| automaton.add_state()).collect())
+            .collect();
 
         for (i, c) in word.chars().enumerate() {
             for e in 0..=k {
-                automaton.add_transition(states[&(i, e)], states[&(i + 1, e)], Transition::Is(c));
+                automaton.add_transition(states[i][e], states[i + 1][e], Transition::Is(c));
                 if e < k {
+                    automaton.add_transition(states[i][e], states[i][e + 1], Transition::Star);
                     automaton.add_transition(
-                        states[&(i, e)],
-                        states[&(i, e + 1)],
-                        Transition::Star,
-                    );
-                    automaton.add_transition(
-                        states[&(i, e)],
-                        states[&(i + 1, e + 1)],
+                        states[i][e],
+                        states[i + 1][e + 1],
                         Transition::Epsilon,
                     );
-                    automaton.add_transition(
-                        states[&(i, e)],
-                        states[&(i + 1, e + 1)],
-                        Transition::Star,
-                    );
+                    automaton.add_transition(states[i][e], states[i + 1][e + 1], Transition::Star);
                 }
             }
         }
@@ -52,12 +41,12 @@ impl LevenshteinAutomaton<NonDeterministic> {
         for e in 0..=k {
             if e < k {
                 automaton.add_transition(
-                    states[&(word_len, e)],
-                    states[&(word_len, e + 1)],
+                    states[word_len][e],
+                    states[word_len][e + 1],
                     Transition::Star,
                 );
             }
-            automaton.make_state_final(states[&(word_len, e)]);
+            automaton.make_state_final(states[word_len][e]);
         }
 
         Self(automaton)
