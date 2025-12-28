@@ -124,6 +124,10 @@ impl Automaton<NonDeterministic> {
                 }
             }
 
+            if new_states.is_empty() {
+                return false;
+            }
+
             active_states = new_states;
         }
 
