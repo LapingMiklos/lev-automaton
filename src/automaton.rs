@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    marker::PhantomData,
     ops::{Index, IndexMut},
 };
 
@@ -13,13 +14,17 @@ pub enum Transition {
     Epsilon,
 }
 
-impl ToString for Transition {
-    fn to_string(&self) -> String {
+impl Transition {
+    pub fn allows(&self, c: char) -> bool {
         match self {
-            Self::Is(c) => c.to_string(),
-            Self::Star => "*".into(),
-            Self::Epsilon => "ε".into()
+            Self::Is(character) => c == *character,
+            Self::Star => true,
+            Self::Epsilon => false,
         }
+    }
+
+    pub fn is_epsilon(&self) -> bool {
+        matches!(self, Self::Epsilon)
     }
 }
 
@@ -34,14 +39,32 @@ impl State {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct Automaton {
+#[derive(Debug)]
+pub enum NonDeterministic {}
+
+#[derive(Debug)]
+pub enum Deterministic {}
+
+#[derive(Debug)]
+pub struct Automaton<T> {
     states: Vec<State>,
     start: Option<StateId>,
     final_states: HashSet<StateId>,
+    _determinism_marker: PhantomData<T>,
 }
 
-impl Index<StateId> for Automaton {
+impl<T> Default for Automaton<T> {
+    fn default() -> Self {
+        Self {
+            states: vec![],
+            start: None,
+            final_states: HashSet::new(),
+            _determinism_marker: PhantomData,
+        }
+    }
+}
+
+impl<T> Index<StateId> for Automaton<T> {
     type Output = State;
 
     fn index(&self, index: StateId) -> &Self::Output {
@@ -49,27 +72,81 @@ impl Index<StateId> for Automaton {
     }
 }
 
-impl IndexMut<StateId> for Automaton {
+impl<T> IndexMut<StateId> for Automaton<T> {
     fn index_mut(&mut self, index: StateId) -> &mut Self::Output {
         &mut self.states[index.0]
     }
 }
 
-impl Automaton {
+impl<T> Automaton<T> {
     pub fn add_state(&mut self) -> StateId {
         self.states.push(State::new());
         StateId(self.states.len() - 1)
     }
 
-    pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self[from].transtions.push((transition, to));
+    pub const fn set_start_state(&mut self, index: StateId) {
+        self.start = Some(index);
     }
 
     pub fn make_state_final(&mut self, index: StateId) {
         self.final_states.insert(index);
     }
+}
 
-    pub const fn set_start_state(&mut self, index: StateId) {
-        self.start = Some(index);
+impl Automaton<NonDeterministic> {
+    pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
+        self[from].transtions.push((transition, to));
+    }
+
+    pub fn run(&self, word: &str) -> bool {
+        if self.states.is_empty() {
+            return false;
+        }
+
+        let mut active_states = HashSet::new();
+        active_states.insert(self.start.unwrap_or(StateId(0)));
+
+        for c in word.chars() {
+            let mut eps_reachable_states = HashSet::new();
+
+            for state in &active_states {
+                self.add_eps_states(&mut eps_reachable_states, *state);
+            }
+
+            let mut new_states = HashSet::new();
+            for current_state in &eps_reachable_states {
+                for s in self[*current_state]
+                    .transtions
+                    .iter()
+                    .filter(|(transition, _)| transition.allows(c))
+                    .map(|(_, to)| to)
+                    .copied()
+                {
+                    new_states.insert(s);
+                }
+            }
+
+            active_states = new_states;
+        }
+
+        active_states.iter().any(|s| self.final_states.contains(s))
+    }
+
+    fn add_eps_states(&self, new_states: &mut HashSet<StateId>, current_state: StateId) {
+        if new_states.contains(&current_state) {
+            return;
+        }
+
+        new_states.insert(current_state);
+
+        for s in self[current_state]
+            .transtions
+            .iter()
+            .filter(|(transition, _)| transition.is_epsilon())
+            .map(|(_, to)| to)
+            .copied()
+        {
+            self.add_eps_states(new_states, s)
+        }
     }
 }

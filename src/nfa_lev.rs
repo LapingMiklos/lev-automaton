@@ -1,9 +1,17 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 
-use crate::automaton::{Automaton, StateId, Transition};
+use crate::automaton::{Automaton, NonDeterministic, StateId, Transition};
 
 #[derive(Debug)]
-pub struct NfaLev(Automaton);
+pub struct NfaLev(Automaton<NonDeterministic>);
+
+impl Deref for NfaLev {
+    type Target = Automaton<NonDeterministic>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl NfaLev {
     #[must_use]
