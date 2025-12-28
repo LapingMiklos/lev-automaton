@@ -2,6 +2,7 @@ use crate::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomato
 
 pub mod automaton;
 pub mod levenshtein_automaton;
+pub mod trie;
 
 fn main() {
     let nfa = LevenshteinAutomaton::new("food", 0);

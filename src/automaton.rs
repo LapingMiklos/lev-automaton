@@ -101,10 +101,6 @@ impl<T> Automaton<T> {
         self.final_states.insert(index);
     }
 
-    fn _add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self[from].transtions.push((transition, to));
-    }
-
     fn get_reachable_states<P>(&self, from: StateId, pred: P) -> impl Iterator<Item = StateId>
     where
         P: Fn(&Transition) -> bool,
@@ -119,7 +115,7 @@ impl<T> Automaton<T> {
 
 impl Automaton<NonDeterministic> {
     pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self._add_transition(from, to, transition);
+        self[from].transtions.push((transition, to));
     }
 
     pub fn run(&self, word: &str) -> bool {
@@ -210,7 +206,9 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                         dfa.add_state()
                     });
 
-                dfa._add_transition(dfa_from, dfa_to, Transition::Is(*c));
+                unsafe {
+                    dfa.add_transition_unchecked(dfa_from, dfa_to, Transition::Is(*c));
+                }
             }
 
             let reachable_states: Set<StateId> = current_state
@@ -228,7 +226,9 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                 dfa.add_state()
             });
 
-            dfa._add_transition(dfa_from, dfa_to, Transition::IsNot(chars));
+            unsafe {
+                dfa.add_transition_unchecked(dfa_from, dfa_to, Transition::IsNot(chars));
+            }
         }
 
         for (nfa_states, dfa_state) in state_map {
@@ -242,6 +242,17 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
 }
 
 impl Automaton<Deterministic> {
+    /// # Safety
+    /// The caller is responsible for ensuring that adding the transition does not break determinism
+    pub unsafe fn add_transition_unchecked(
+        &mut self,
+        from: StateId,
+        to: StateId,
+        transition: Transition,
+    ) {
+        self[from].transtions.push((transition, to));
+    }
+
     pub fn run(&self, word: &str) -> bool {
         if self.states.is_empty() {
             return false;
