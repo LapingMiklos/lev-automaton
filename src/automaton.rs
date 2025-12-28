@@ -277,30 +277,22 @@ impl Automaton<Deterministic> {
             return false;
         }
 
-        let mut active_states = Set::new();
-        active_states.insert(self.start.unwrap_or(StateId(0)));
+        let mut active_state = self.start.unwrap_or(StateId(0));
 
         for c in word.chars() {
-            let mut new_states = Set::new();
-            for current_state in &active_states {
-                for s in self[*current_state]
-                    .transtions
-                    .iter()
-                    .filter(|(transition, _)| transition.allows(c))
-                    .map(|(_, to)| to)
-                    .copied()
-                {
-                    new_states.insert(s);
-                }
-            }
-
-            if new_states.is_empty() {
+            if let Some(new_state) = self[active_state]
+                .transtions
+                .iter()
+                .filter(|(transition, _)| transition.allows(c))
+                .map(|(_, to)| to)
+                .next()
+            {
+                active_state = *new_state
+            } else {
                 return false;
             }
-
-            active_states = new_states;
         }
 
-        active_states.iter().any(|s| self.final_states.contains(s))
+        self.final_states.contains(&active_state)
     }
 }

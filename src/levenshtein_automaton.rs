@@ -83,7 +83,7 @@ impl From<NfaLev> for DfaLev {
 
 #[cfg(test)]
 mod test {
-    use crate::levenshtein_automata::{DfaLev, NfaLev};
+    use crate::levenshtein_automaton::{DfaLev, NfaLev};
 
     const FOOD: &str = "food";
 

@@ -1,7 +1,7 @@
-use crate::levenshtein_automata::{DfaLev, NfaLev};
+use crate::levenshtein_automaton::{DfaLev, NfaLev};
 
 pub mod automaton;
-pub mod levenshtein_automata;
+pub mod levenshtein_automaton;
 
 fn main() {
     let nfa = NfaLev::new("food", 0);
