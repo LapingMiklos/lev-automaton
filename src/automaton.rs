@@ -129,7 +129,13 @@ impl Automaton<NonDeterministic> {
             active_states = new_states;
         }
 
-        active_states.iter().any(|s| self.final_states.contains(s))
+        let mut eps_reachable_states = HashSet::new();
+
+        for state in &active_states {
+            self.add_eps_states(&mut eps_reachable_states, *state);
+        }
+
+        eps_reachable_states.iter().any(|s| self.final_states.contains(s))
     }
 
     fn add_eps_states(&self, new_states: &mut HashSet<StateId>, current_state: StateId) {
