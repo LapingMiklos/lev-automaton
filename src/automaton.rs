@@ -135,7 +135,9 @@ impl Automaton<NonDeterministic> {
             self.add_eps_states(&mut eps_reachable_states, *state);
         }
 
-        eps_reachable_states.iter().any(|s| self.final_states.contains(s))
+        eps_reachable_states
+            .iter()
+            .any(|s| self.final_states.contains(s))
     }
 
     fn add_eps_states(&self, new_states: &mut HashSet<StateId>, current_state: StateId) {
