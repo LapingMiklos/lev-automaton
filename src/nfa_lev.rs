@@ -87,6 +87,8 @@ mod test {
         "*o", "f*.", "f.o*d.", "f..od.", "f*.o", "fo**.", "f...ood", "*.d", "f", "o",
     ];
 
+    const FOOD_LEV_4: [&str; 6] = ["", "****", "f***.", "***.d", "***d.", "**o*."];
+
     #[test]
     fn test_0th_degree_lev_autamata() {
         let target = "food";
@@ -129,6 +131,29 @@ mod test {
         }
 
         for word in FOOD_LEV_3 {
+            assert!(!lev_aut.run(word))
+        }
+    }
+
+    #[test]
+    fn test_3rd_degree_lev_autamata() {
+        let lev_aut = NfaLev::new(FOOD, 3);
+
+        assert!(lev_aut.run(FOOD));
+
+        for word in FOOD_LEV_1 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_2 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_3 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_4 {
             assert!(!lev_aut.run(word))
         }
     }
