@@ -3,28 +3,17 @@ use std::{collections::HashMap, ops::Deref};
 use crate::automaton::{Automaton, Deterministic, NonDeterministic, StateId, Transition};
 
 #[derive(Debug)]
-pub struct NfaLev(Automaton<NonDeterministic>);
+pub struct LevenshteinAutomaton<T>(Automaton<T>);
 
-impl Deref for NfaLev {
-    type Target = Automaton<NonDeterministic>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Debug)]
-pub struct DfaLev(Automaton<Deterministic>);
-
-impl Deref for DfaLev {
-    type Target = Automaton<Deterministic>;
+impl<T> Deref for LevenshteinAutomaton<T> {
+    type Target = Automaton<T>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl NfaLev {
+impl LevenshteinAutomaton<NonDeterministic> {
     #[must_use]
     pub fn new(word: &str, k: usize) -> Self {
         let mut automaton = Automaton::default();
@@ -75,15 +64,15 @@ impl NfaLev {
     }
 }
 
-impl From<NfaLev> for DfaLev {
-    fn from(nfa: NfaLev) -> Self {
-        DfaLev(nfa.0.into())
+impl From<LevenshteinAutomaton<NonDeterministic>> for LevenshteinAutomaton<Deterministic> {
+    fn from(nfa: LevenshteinAutomaton<NonDeterministic>) -> Self {
+        Self(nfa.0.into())
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::levenshtein_automaton::{DfaLev, NfaLev};
+    use crate::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton};
 
     const FOOD: &str = "food";
 
@@ -108,7 +97,7 @@ mod test {
 
     #[test]
     fn test_0th_degree_lev_autamata() {
-        let lev_aut = NfaLev::new(FOOD, 0);
+        let lev_aut = LevenshteinAutomaton::new(FOOD, 0);
 
         assert!(lev_aut.run(FOOD));
 
@@ -119,7 +108,7 @@ mod test {
 
     #[test]
     fn test_1st_degree_lev_autamata() {
-        let lev_aut = NfaLev::new(FOOD, 1);
+        let lev_aut = LevenshteinAutomaton::new(FOOD, 1);
 
         assert!(lev_aut.run(FOOD));
 
@@ -134,7 +123,7 @@ mod test {
 
     #[test]
     fn test_2nd_degree_lev_autamata() {
-        let lev_aut = NfaLev::new(FOOD, 2);
+        let lev_aut = LevenshteinAutomaton::new(FOOD, 2);
 
         assert!(lev_aut.run(FOOD));
 
@@ -153,7 +142,7 @@ mod test {
 
     #[test]
     fn test_3rd_degree_lev_autamata() {
-        let lev_aut = NfaLev::new(FOOD, 3);
+        let lev_aut = LevenshteinAutomaton::new(FOOD, 3);
 
         assert!(lev_aut.run(FOOD));
 
@@ -176,7 +165,8 @@ mod test {
 
     #[test]
     fn test_0th_degree_det_lev_autamata() {
-        let lev_aut: DfaLev = NfaLev::new(FOOD, 0).into();
+        let lev_aut: LevenshteinAutomaton<Deterministic> =
+            LevenshteinAutomaton::new(FOOD, 0).into();
 
         assert!(lev_aut.run(FOOD));
 
@@ -187,7 +177,8 @@ mod test {
 
     #[test]
     fn test_1st_degree_det_lev_autamata() {
-        let lev_aut: DfaLev = NfaLev::new(FOOD, 1).into();
+        let lev_aut: LevenshteinAutomaton<Deterministic> =
+            LevenshteinAutomaton::new(FOOD, 1).into();
 
         assert!(lev_aut.run(FOOD));
 
@@ -202,7 +193,8 @@ mod test {
 
     #[test]
     fn test_2nd_degree_det_lev_autamata() {
-        let lev_aut: DfaLev = NfaLev::new(FOOD, 2).into();
+        let lev_aut: LevenshteinAutomaton<Deterministic> =
+            LevenshteinAutomaton::new(FOOD, 2).into();
 
         assert!(lev_aut.run(FOOD));
 
@@ -221,7 +213,8 @@ mod test {
 
     #[test]
     fn test_3rd_degree_det_lev_autamata() {
-        let lev_aut: DfaLev = NfaLev::new(FOOD, 3).into();
+        let lev_aut: LevenshteinAutomaton<Deterministic> =
+            LevenshteinAutomaton::new(FOOD, 3).into();
 
         assert!(lev_aut.run(FOOD));
 
