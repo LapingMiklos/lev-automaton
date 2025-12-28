@@ -104,6 +104,17 @@ impl<T> Automaton<T> {
     fn _add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
         self[from].transtions.push((transition, to));
     }
+
+    fn get_reachable_states<P>(&self, from: StateId, pred: P) -> impl Iterator<Item = StateId>
+    where
+        P: Fn(&Transition) -> bool,
+    {
+        self[from]
+            .transtions
+            .iter()
+            .filter(move |(transition, _)| pred(transition))
+            .map(|(_, to)| *to)
+    }
 }
 
 impl Automaton<NonDeterministic> {
@@ -121,13 +132,7 @@ impl Automaton<NonDeterministic> {
         for c in word.chars() {
             let mut new_states = Set::new();
             for current_state in &active_states {
-                for s in self[*current_state]
-                    .transtions
-                    .iter()
-                    .filter(|(transition, _)| transition.allows(c))
-                    .map(|(_, to)| to)
-                    .copied()
-                {
+                for s in self.get_reachable_states(*current_state, |t| t.allows(c)) {
                     new_states.insert(s);
                 }
             }
@@ -146,13 +151,7 @@ impl Automaton<NonDeterministic> {
         let mut new_states: Vec<StateId> = states.iter().copied().collect();
 
         while let Some(state) = new_states.pop() {
-            for s in self[state]
-                .transtions
-                .iter()
-                .filter(|(transition, _)| transition.is_epsilon())
-                .map(|(_, to)| to)
-                .copied()
-            {
+            for s in self.get_reachable_states(state, Transition::is_epsilon) {
                 if states.insert(s) {
                     new_states.push(s);
                 }
@@ -198,14 +197,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
             for c in &chars {
                 let reachable_states: Set<StateId> = current_state
                     .iter()
-                    .flat_map(|s| {
-                        nfa[*s]
-                            .transtions
-                            .iter()
-                            .filter(|(transition, _)| transition.allows(*c))
-                            .map(|(_, to)| to)
-                    })
-                    .copied()
+                    .flat_map(|s| nfa.get_reachable_states(*s, |t| t.allows(*c)))
                     .collect();
 
                 if reachable_states.is_empty() {
@@ -223,14 +215,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
 
             let reachable_states: Set<StateId> = current_state
                 .iter()
-                .flat_map(|s| {
-                    nfa[*s]
-                        .transtions
-                        .iter()
-                        .filter(|(transition, _)| transition.is_star())
-                        .map(|(_, to)| to)
-                })
-                .copied()
+                .flat_map(|s| nfa.get_reachable_states(*s, Transition::is_star))
                 .collect();
 
             if reachable_states.is_empty() {
