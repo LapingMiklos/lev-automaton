@@ -1,12 +1,23 @@
 use std::{collections::HashMap, ops::Deref};
 
-use crate::automaton::{Automaton, NonDeterministic, StateId, Transition};
+use crate::automaton::{Automaton, Deterministic, NonDeterministic, StateId, Transition};
 
 #[derive(Debug)]
 pub struct NfaLev(Automaton<NonDeterministic>);
 
 impl Deref for NfaLev {
     type Target = Automaton<NonDeterministic>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug)]
+pub struct DfaLev(Automaton<Deterministic>);
+
+impl Deref for DfaLev {
+    type Target = Automaton<Deterministic>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -64,9 +75,15 @@ impl NfaLev {
     }
 }
 
+impl From<NfaLev> for DfaLev {
+    fn from(nfa: NfaLev) -> Self {
+        DfaLev(nfa.0.into())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::nfa_lev::NfaLev;
+    use crate::levenshtein_automata::{DfaLev, NfaLev};
 
     const FOOD: &str = "food";
 
@@ -91,10 +108,9 @@ mod test {
 
     #[test]
     fn test_0th_degree_lev_autamata() {
-        let target = "food";
-        let lev_aut = NfaLev::new(target, 0);
+        let lev_aut = NfaLev::new(FOOD, 0);
 
-        assert!(lev_aut.run(target));
+        assert!(lev_aut.run(FOOD));
 
         for word in FOOD_LEV_1 {
             assert!(!lev_aut.run(word))
@@ -138,6 +154,74 @@ mod test {
     #[test]
     fn test_3rd_degree_lev_autamata() {
         let lev_aut = NfaLev::new(FOOD, 3);
+
+        assert!(lev_aut.run(FOOD));
+
+        for word in FOOD_LEV_1 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_2 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_3 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_4 {
+            assert!(!lev_aut.run(word))
+        }
+    }
+
+    #[test]
+    fn test_0th_degree_det_lev_autamata() {
+        let lev_aut: DfaLev = NfaLev::new(FOOD, 0).into();
+
+        assert!(lev_aut.run(FOOD));
+
+        for word in FOOD_LEV_1 {
+            assert!(!lev_aut.run(word))
+        }
+    }
+
+    #[test]
+    fn test_1st_degree_det_lev_autamata() {
+        let lev_aut: DfaLev = NfaLev::new(FOOD, 1).into();
+
+        assert!(lev_aut.run(FOOD));
+
+        for word in FOOD_LEV_1 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_2 {
+            assert!(!lev_aut.run(word))
+        }
+    }
+
+    #[test]
+    fn test_2nd_degree_det_lev_autamata() {
+        let lev_aut: DfaLev = NfaLev::new(FOOD, 2).into();
+
+        assert!(lev_aut.run(FOOD));
+
+        for word in FOOD_LEV_1 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_2 {
+            assert!(lev_aut.run(word))
+        }
+
+        for word in FOOD_LEV_3 {
+            assert!(!lev_aut.run(word))
+        }
+    }
+
+    #[test]
+    fn test_3rd_degree_det_lev_autamata() {
+        let lev_aut: DfaLev = NfaLev::new(FOOD, 3).into();
 
         assert!(lev_aut.run(FOOD));
 
