@@ -37,6 +37,17 @@ impl Transition {
     pub fn is_star(&self) -> bool {
         matches!(self, Self::Star)
     }
+
+    pub fn merge(&self, other: &Self) -> Option<char> {
+        match (self, other) {
+            (Self::Is(c1), Self::Is(c2)) => (c1 == c2).then_some(*c1),
+            (Self::IsNot(cs), Self::Is(c)) => (!cs.contains(c)).then_some(*c),
+            (Self::Is(c), Self::IsNot(cs)) => (!cs.contains(c)).then_some(*c),
+            (Self::Star, Self::Is(c)) => Some(*c),
+            (Self::Is(c), Self::Star) => Some(*c),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -240,8 +251,32 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
 }
 
 impl Automaton<Deterministic> {
-    fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self[from].transtions.push((transition, to));
+    pub fn intersect(&self, other: &Self) -> Vec<String> {
+        let mut words = vec![];
+        let mut stack = vec![(
+            String::new(),
+            self.start.unwrap_or(StateId(0)),
+            other.start.unwrap_or(StateId(0)),
+        )];
+        while let Some((word, self_state, other_state)) = stack.pop() {
+            for (self_transition, new_self_state) in &self[self_state].transtions {
+                for (other_transtion, new_other_state) in &other[other_state].transtions {
+                    if let Some(char) = self_transition.merge(other_transtion) {
+                        let mut new_word = word.clone();
+                        new_word.push(char);
+
+                        if self.final_states.contains(new_self_state)
+                            && other.final_states.contains(new_other_state)
+                        {
+                            words.push(new_word.clone())
+                        }
+                        stack.push((new_word, *new_self_state, *new_other_state))
+                    }
+                }
+            }
+        }
+
+        words
     }
 
     pub fn create_trie(words: &[String]) -> Self {
@@ -251,6 +286,10 @@ impl Automaton<Deterministic> {
         automaton.add_trie_states(start_state, words);
 
         automaton
+    }
+
+    fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
+        self[from].transtions.push((transition, to));
     }
 
     fn add_trie_states(&mut self, start_state: StateId, words: &[String]) {

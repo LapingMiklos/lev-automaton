@@ -7,14 +7,16 @@ pub mod levenshtein_automaton;
 pub mod trie;
 
 fn main() {
-    let nfa = LevenshteinAutomaton::new("food", 0);
-    dbg!(&nfa);
+    let nfa = LevenshteinAutomaton::new("donkep", 1);
+    // dbg!(&nfa);
     println!("{:?}", nfa.run("brod"));
 
     let dfa: LevenshteinAutomaton<Deterministic> = nfa.into();
-    dbg!(dfa);
+    // dbg!(&dfa);
 
     let trie = Trie::load_from_file(Path::new("/usr/share/dict/words")).expect("asd");
 
     dbg!(trie.run("donkey"));
+
+    dbg!(dfa.intersect(&trie));
 }
