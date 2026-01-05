@@ -36,6 +36,7 @@ impl Trie {
 
 #[cfg(test)]
 mod test {
+
     use crate::trie::Trie;
 
     #[test]
