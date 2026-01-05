@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use std::{
     collections::{BTreeMap, BTreeSet},
     marker::PhantomData,
@@ -206,9 +208,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                         dfa.add_state()
                     });
 
-                unsafe {
-                    dfa.add_transition_unchecked(dfa_from, dfa_to, Transition::Is(*c));
-                }
+                dfa.add_transition(dfa_from, dfa_to, Transition::Is(*c));
             }
 
             let reachable_states: Set<StateId> = current_state
@@ -226,9 +226,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                 dfa.add_state()
             });
 
-            unsafe {
-                dfa.add_transition_unchecked(dfa_from, dfa_to, Transition::IsNot(chars));
-            }
+            dfa.add_transition(dfa_from, dfa_to, Transition::IsNot(chars));
         }
 
         for (nfa_states, dfa_state) in state_map {
@@ -242,15 +240,37 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
 }
 
 impl Automaton<Deterministic> {
-    /// # Safety
-    /// The caller is responsible for ensuring that adding the transition does not break determinism
-    pub unsafe fn add_transition_unchecked(
-        &mut self,
-        from: StateId,
-        to: StateId,
-        transition: Transition,
-    ) {
+    fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
         self[from].transtions.push((transition, to));
+    }
+
+    pub fn create_trie(words: &[String]) -> Self {
+        let mut automaton = Self::default();
+
+        let start_state = automaton.add_state();
+        automaton.add_trie_states(start_state, words);
+
+        automaton
+    }
+
+    fn add_trie_states(&mut self, start_state: StateId, words: &[String]) {
+        _ = words
+            .iter()
+            .chunk_by(|w| w.chars().next())
+            .into_iter()
+            .filter_map(|(char, word_group)| char.map(|c| (c, word_group)))
+            .map(|(char, word_group)| {
+                let new_state = self.add_state();
+                self.add_transition(start_state, new_state, Transition::Is(char));
+                let suffixes: Vec<String> =
+                    word_group.map(|w| w.chars().skip(1).collect()).collect();
+                if suffixes.iter().any(String::is_empty) {
+                    self.make_state_final(new_state);
+                }
+
+                self.add_trie_states(new_state, &suffixes);
+            })
+            .collect::<Vec<_>>();
     }
 
     pub fn run(&self, word: &str) -> bool {

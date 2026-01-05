@@ -1,4 +1,6 @@
-use crate::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton};
+use std::path::Path;
+
+use crate::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton, trie::Trie};
 
 pub mod automaton;
 pub mod levenshtein_automaton;
@@ -11,4 +13,8 @@ fn main() {
 
     let dfa: LevenshteinAutomaton<Deterministic> = nfa.into();
     dbg!(dfa);
+
+    let trie = Trie::load_from_file(Path::new("/usr/share/dict/words")).expect("asd");
+
+    dbg!(trie.run("donkey"));
 }
