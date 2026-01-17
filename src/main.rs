@@ -18,7 +18,7 @@ fn main() {
     let reader = stdin.lock();
 
     let trie = Trie::load_from_file(Path::new(&path))
-        .expect(&format!("Unable to open dictionary file: {path}"));
+        .unwrap_or_else(|_| panic!("Unable to open dictionary file: {path}"));
 
     for line in reader.lines() {
         let line = line.expect("STDIN FAIL");
