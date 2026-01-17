@@ -4,21 +4,17 @@ use std::{
     path::Path,
 };
 
-use crate::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton, trie::Trie};
 use colored::Colorize;
-
-pub mod automaton;
-pub mod levenshtein_automaton;
-pub mod trie;
+use lev_automaton::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton, trie::Trie};
 
 fn main() {
     let path = env::var("LEV_SPELL_CHECK_DICT_PATH").unwrap_or("/usr/share/dict/words".into());
+    let trie = Trie::load_from_file(Path::new(&path))
+        .unwrap_or_else(|_| panic!("Unable to open dictionary file: {path}"));
 
     let stdin = io::stdin();
     let reader = stdin.lock();
 
-    let trie = Trie::load_from_file(Path::new(&path))
-        .unwrap_or_else(|_| panic!("Unable to open dictionary file: {path}"));
 
     for line in reader.lines() {
         let line = line.expect("STDIN FAIL");
