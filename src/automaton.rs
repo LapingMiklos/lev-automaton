@@ -279,7 +279,7 @@ impl Automaton<Deterministic> {
         words
     }
 
-    pub fn create_trie(words: &[String]) -> Self {
+    pub fn create_trie(words: &[&str]) -> Self {
         let mut automaton = Self::default();
 
         let start_state = automaton.add_state();
@@ -292,7 +292,7 @@ impl Automaton<Deterministic> {
         self[from].transtions.push((transition, to));
     }
 
-    fn add_trie_states(&mut self, start_state: StateId, words: &[String]) {
+    fn add_trie_states(&mut self, start_state: StateId, words: &[&str]) {
         _ = words
             .iter()
             .chunk_by(|w| w.chars().next())
@@ -301,9 +301,8 @@ impl Automaton<Deterministic> {
             .map(|(char, word_group)| {
                 let new_state = self.add_state();
                 self.add_transition(start_state, new_state, Transition::Is(char));
-                let suffixes: Vec<String> =
-                    word_group.map(|w| w.chars().skip(1).collect()).collect();
-                if suffixes.iter().any(String::is_empty) {
+                let suffixes: Vec<&str> = word_group.map(|w| &w[1..]).collect();
+                if suffixes.iter().any(|w| w.is_empty()) {
                     self.make_state_final(new_state);
                 }
 

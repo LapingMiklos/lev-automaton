@@ -24,12 +24,13 @@ impl Trie {
         let reader = BufReader::new(file);
         let words: Vec<_> = reader.lines().map_while(Result::ok).collect();
 
-        let automaton = Automaton::create_trie(&words);
+        let automaton =
+            Automaton::create_trie(&words.iter().map(String::as_str).collect::<Vec<_>>());
 
         Ok(Self(automaton))
     }
 
-    pub fn new(words: &[String]) -> Self {
+    pub fn new(words: &[&str]) -> Self {
         Self(Automaton::create_trie(words))
     }
 }
@@ -41,10 +42,7 @@ mod test {
 
     #[test]
     fn test_trie() {
-        let words: Vec<String> = vec!["asd", "bin", "bing", "bong"]
-            .into_iter()
-            .map(String::from)
-            .collect();
+        let words: Vec<&str> = vec!["asd", "bin", "bing", "bong"];
         let trie = Trie::new(&words);
 
         assert!(trie.run("bing"));
