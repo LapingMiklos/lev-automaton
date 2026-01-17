@@ -22,7 +22,8 @@ impl Trie {
     pub fn load_from_file(path: &Path) -> io::Result<Self> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
-        let words: Vec<_> = reader.lines().map_while(Result::ok).collect();
+        let mut words: Vec<_> = reader.lines().map_while(Result::ok).collect();
+        words.sort();
 
         let automaton =
             Automaton::create_trie(&words.iter().map(String::as_str).collect::<Vec<_>>());

@@ -301,7 +301,7 @@ impl Automaton<Deterministic> {
             .map(|(char, word_group)| {
                 let new_state = self.add_state();
                 self.add_transition(start_state, new_state, Transition::Is(char));
-                let suffixes: Vec<&str> = word_group.map(|w| &w[1..]).collect();
+                let suffixes: Vec<&str> = word_group.map(|w| suffix_of(w)).collect();
                 if suffixes.iter().any(|w| w.is_empty()) {
                     self.make_state_final(new_state);
                 }
@@ -319,13 +319,14 @@ impl Automaton<Deterministic> {
         let mut active_state = self.start.unwrap_or(StateId(0));
 
         for c in word.chars() {
-            if let Some(new_state) = self[active_state]
+            let transitions: Vec<_> = self[active_state]
                 .transtions
                 .iter()
                 .filter(|(transition, _)| transition.allows(c))
                 .map(|(_, to)| to)
-                .next()
-            {
+                .collect();
+
+            if let Some(new_state) = transitions.into_iter().next() {
                 active_state = *new_state
             } else {
                 return false;
@@ -333,5 +334,12 @@ impl Automaton<Deterministic> {
         }
 
         self.final_states.contains(&active_state)
+    }
+}
+
+fn suffix_of(word: &str) -> &str {
+    match word.char_indices().nth(1) {
+        Some((idx, _)) => &word[idx..],
+        None => "",
     }
 }
