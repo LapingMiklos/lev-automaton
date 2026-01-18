@@ -13,20 +13,23 @@ fn lev_automaton_bench(c: &mut Criterion) {
     let path = env::var("LEV_SPELL_CHECK_DICT_PATH").unwrap_or("/usr/share/dict/words".into());
     let trie = Trie::load_from_file(Path::new(&path))
         .unwrap_or_else(|_| panic!("Unable to open dictionary file: {path}"));
-    let spell_checker = SpellChecker::new(trie, |word, trie| {
-        let aut = LevenshteinAutomaton::new(word, 1);
-        let aut: LevenshteinAutomaton<Deterministic> = aut.into();
-        aut.get_automaton().intersect(&trie.get_automaton())
-    });
-
     let mut group = c.benchmark_group("Levenshtein Automaton");
-    group.bench_function("1st degree", |b| {
-        b.iter(|| {
-            for (misspelled, _) in words.iter() {
-                let _ = spell_checker.check_word(misspelled);
-            }
+
+    for degree in 1..=2 {
+        let spell_checker = SpellChecker::new(trie.clone(), |word, trie| {
+            let aut = LevenshteinAutomaton::new(word, degree);
+            let aut: LevenshteinAutomaton<Deterministic> = aut.into();
+            aut.get_automaton().intersect(&trie.get_automaton())
         });
-    });
+
+        group.bench_function(format!("degree: {degree}"), |b| {
+            b.iter(|| {
+                for (misspelled, _) in words.iter() {
+                    let _ = spell_checker.check_word(misspelled);
+                }
+            });
+        });
+    }
 }
 
 criterion_group! {
