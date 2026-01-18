@@ -12,7 +12,7 @@ impl<T> LevenshteinAutomaton<T> {
 impl LevenshteinAutomaton<NonDeterministic> {
     #[must_use]
     pub fn new(word: &str, k: usize) -> Self {
-        let mut automaton = Automaton::default();
+        let mut automaton: Automaton<NonDeterministic> = Automaton::default();
 
         let word_len = word.chars().count();
         let states: Vec<Vec<StateId>> = (0..=word_len)

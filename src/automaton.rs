@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use std::{
     collections::{BTreeMap, BTreeSet},
     marker::PhantomData,
@@ -46,6 +44,19 @@ impl Transition {
             (Self::Star, Self::Is(c)) => Some(*c),
             (Self::Is(c), Self::Star) => Some(*c),
             _ => None,
+        }
+    }
+
+    pub fn have_overlap(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Is(c1), Self::Is(c2)) => c1 == c2,
+            (Self::IsNot(cs), Self::Is(c)) => !cs.contains(c),
+            (Self::Is(c), Self::IsNot(cs)) => !cs.contains(c),
+            (Self::IsNot(_), Self::IsNot(_)) => true,
+            (Self::Epsilon, _) => true,
+            (_, Self::Epsilon) => true,
+            (Self::Star, _) => true,
+            (_, Self::Star) => true,
         }
     }
 }
@@ -219,7 +230,8 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                         dfa.add_state()
                     });
 
-                dfa.add_transition(dfa_from, dfa_to, Transition::Is(*c));
+                let added_transition = dfa.add_transition(dfa_from, dfa_to, Transition::Is(*c));
+                debug_assert!(added_transition)
             }
 
             let reachable_states: Set<StateId> = current_state
@@ -237,7 +249,8 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                 dfa.add_state()
             });
 
-            dfa.add_transition(dfa_from, dfa_to, Transition::IsNot(chars));
+            let added_transition = dfa.add_transition(dfa_from, dfa_to, Transition::IsNot(chars));
+            debug_assert!(added_transition)
         }
 
         for (nfa_states, dfa_state) in state_map {
@@ -279,36 +292,18 @@ impl Automaton<Deterministic> {
         words
     }
 
-    pub fn create_trie(words: &[&str]) -> Self {
-        let mut automaton = Self::default();
-
-        let start_state = automaton.add_state();
-        automaton.add_trie_states(start_state, words);
-
-        automaton
-    }
-
-    fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self[from].transtions.push((transition, to));
-    }
-
-    fn add_trie_states(&mut self, start_state: StateId, words: &[&str]) {
-        _ = words
+    #[must_use]
+    pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) -> bool {
+        if self[from]
+            .transtions
             .iter()
-            .chunk_by(|w| w.chars().next())
-            .into_iter()
-            .filter_map(|(char, word_group)| char.map(|c| (c, word_group)))
-            .map(|(char, word_group)| {
-                let new_state = self.add_state();
-                self.add_transition(start_state, new_state, Transition::Is(char));
-                let suffixes: Vec<&str> = word_group.map(|w| suffix_of(w)).collect();
-                if suffixes.iter().any(|w| w.is_empty()) {
-                    self.make_state_final(new_state);
-                }
+            .any(|(t, _)| t.have_overlap(&transition))
+        {
+            return false;
+        }
 
-                self.add_trie_states(new_state, &suffixes);
-            })
-            .collect::<Vec<_>>();
+        self[from].transtions.push((transition, to));
+        true
     }
 
     pub fn recognizes(&self, word: &str) -> bool {
@@ -334,12 +329,5 @@ impl Automaton<Deterministic> {
         }
 
         self.final_states.contains(&active_state)
-    }
-}
-
-fn suffix_of(word: &str) -> &str {
-    match word.char_indices().nth(1) {
-        Some((idx, _)) => &word[idx..],
-        None => "",
     }
 }
