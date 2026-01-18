@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
-    ops::Deref,
     path::Path,
 };
 
@@ -9,14 +8,6 @@ use crate::automaton::{Automaton, Deterministic};
 
 #[derive(Debug)]
 pub struct Trie(Automaton<Deterministic>);
-
-impl Deref for Trie {
-    type Target = Automaton<Deterministic>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
 
 impl Trie {
     pub fn load_from_file(path: &Path) -> io::Result<Self> {
@@ -34,6 +25,14 @@ impl Trie {
     pub fn new(words: &[&str]) -> Self {
         Self(Automaton::create_trie(words))
     }
+
+    pub fn constains(&self, word: &str) -> bool {
+        self.0.recognizes(word)
+    }
+
+    pub fn get_automaton(&self) -> &Automaton<Deterministic> {
+        &self.0
+    }
 }
 
 #[cfg(test)]
@@ -46,12 +45,12 @@ mod test {
         let words: Vec<&str> = vec!["asd", "bin", "bing", "bong"];
         let trie = Trie::new(&words);
 
-        assert!(trie.run("bing"));
-        assert!(trie.run("bong"));
-        assert!(trie.run("bin"));
-        assert!(trie.run("asd"));
-        assert!(!trie.run("asdf"));
-        assert!(!trie.run("bi"));
-        assert!(!trie.run(""));
+        assert!(trie.constains("bing"));
+        assert!(trie.constains("bong"));
+        assert!(trie.constains("bin"));
+        assert!(trie.constains("asd"));
+        assert!(!trie.constains("asdf"));
+        assert!(!trie.constains("bi"));
+        assert!(!trie.constains(""));
     }
 }

@@ -1,14 +1,10 @@
-use std::ops::Deref;
-
 use crate::automaton::{Automaton, Deterministic, NonDeterministic, StateId, Transition};
 
 #[derive(Debug)]
 pub struct LevenshteinAutomaton<T>(Automaton<T>);
 
-impl<T> Deref for LevenshteinAutomaton<T> {
-    type Target = Automaton<T>;
-
-    fn deref(&self) -> &Self::Target {
+impl<T> LevenshteinAutomaton<T> {
+    pub fn get_automaton(&self) -> &Automaton<T> {
         &self.0
     }
 }
@@ -88,10 +84,10 @@ mod test {
     fn test_0th_degree_lev_autamata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 0);
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -99,14 +95,14 @@ mod test {
     fn test_1st_degree_lev_autamata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 1);
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -114,18 +110,18 @@ mod test {
     fn test_2nd_degree_lev_autamata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 2);
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_3 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -133,22 +129,22 @@ mod test {
     fn test_3rd_degree_lev_autamata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 3);
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_3 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_4 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -157,10 +153,10 @@ mod test {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 0).into();
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -169,14 +165,14 @@ mod test {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 1).into();
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -185,18 +181,18 @@ mod test {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 2).into();
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_3 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 
@@ -205,22 +201,22 @@ mod test {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 3).into();
 
-        assert!(lev_aut.run(FOOD));
+        assert!(lev_aut.0.recognizes(FOOD));
 
         for word in FOOD_LEV_1 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_2 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_3 {
-            assert!(lev_aut.run(word))
+            assert!(lev_aut.0.recognizes(word))
         }
 
         for word in FOOD_LEV_4 {
-            assert!(!lev_aut.run(word))
+            assert!(!lev_aut.0.recognizes(word))
         }
     }
 }

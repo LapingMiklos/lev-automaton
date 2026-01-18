@@ -5,28 +5,34 @@ use std::{
 };
 
 use colored::Colorize;
-use lev_automaton::{automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton, trie::Trie};
+use lev_automaton::{
+    automaton::Deterministic, levenshtein_automaton::LevenshteinAutomaton,
+    spell_checker::SpellChecker, trie::Trie,
+};
 
 fn main() {
     let path = env::var("LEV_SPELL_CHECK_DICT_PATH").unwrap_or("/usr/share/dict/words".into());
     let trie = Trie::load_from_file(Path::new(&path))
         .unwrap_or_else(|_| panic!("Unable to open dictionary file: {path}"));
+    let spell_checker = SpellChecker::new(trie, |word, trie| {
+        let aut = LevenshteinAutomaton::new(word, 1);
+        let aut: LevenshteinAutomaton<Deterministic> = aut.into();
+        aut.get_automaton().intersect(trie.get_automaton())
+    });
 
     let stdin = io::stdin();
     let reader = stdin.lock();
-
 
     for line in reader.lines() {
         let line = line.expect("STDIN FAIL");
 
         _ = line
             .split_whitespace()
-            .map(|word| {
-                if !trie.run(word) {
-                    let aut = LevenshteinAutomaton::new(word, 1);
-                    let aut: LevenshteinAutomaton<Deterministic> = aut.into();
-                    let possible_corrections = aut.intersect(&trie);
-
+            .map(|word| match spell_checker.check_word(word) {
+                Ok(()) => {
+                    print!("{word} ")
+                }
+                Err(possible_corrections) => {
                     print!("{}", word.red().strikethrough());
                     match possible_corrections.len() {
                         0 => {}
@@ -44,8 +50,6 @@ fn main() {
                             print!(" }} ");
                         }
                     }
-                } else {
-                    print!("{word} ")
                 }
             })
             .collect::<Vec<_>>();

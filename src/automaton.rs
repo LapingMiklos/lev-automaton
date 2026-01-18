@@ -131,7 +131,7 @@ impl Automaton<NonDeterministic> {
         self[from].transtions.push((transition, to));
     }
 
-    pub fn run(&self, word: &str) -> bool {
+    pub fn recognizes(&self, word: &str) -> bool {
         if self.states.is_empty() {
             return false;
         }
@@ -311,7 +311,7 @@ impl Automaton<Deterministic> {
             .collect::<Vec<_>>();
     }
 
-    pub fn run(&self, word: &str) -> bool {
+    pub fn recognizes(&self, word: &str) -> bool {
         if self.states.is_empty() {
             return false;
         }
