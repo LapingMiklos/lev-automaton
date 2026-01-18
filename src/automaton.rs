@@ -50,7 +50,7 @@ impl Transition {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct State {
     transtions: Vec<(Transition, StateId)>,
 }
@@ -61,13 +61,13 @@ impl State {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NonDeterministic {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Deterministic {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Automaton<T> {
     states: Vec<State>,
     start: Option<StateId>,

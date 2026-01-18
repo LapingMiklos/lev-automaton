@@ -6,7 +6,7 @@ use std::{
 
 use crate::automaton::{Automaton, Deterministic};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Trie(Automaton<Deterministic>);
 
 impl Trie {
