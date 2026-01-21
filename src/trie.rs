@@ -56,12 +56,12 @@ impl Trie {
             .collect::<Vec<_>>();
     }
 
-    pub fn constains(&self, word: &str) -> bool {
+    pub fn contains(&self, word: &str) -> bool {
         self.0.recognizes(word)
     }
 
-    pub fn get_automaton(&self) -> &Automaton<Deterministic> {
-        &self.0
+    pub fn filter(&self, automata: &Automaton<Deterministic>) -> Vec<String> {
+        automata.intersect(&self.0)
     }
 }
 
@@ -82,12 +82,12 @@ mod test {
         let mut words: Vec<&str> = vec!["asd", "bin", "bing", "bong"];
         let trie = Trie::new(words.as_mut_slice());
 
-        assert!(trie.constains("bing"));
-        assert!(trie.constains("bong"));
-        assert!(trie.constains("bin"));
-        assert!(trie.constains("asd"));
-        assert!(!trie.constains("asdf"));
-        assert!(!trie.constains("bi"));
-        assert!(!trie.constains(""));
+        assert!(trie.contains("bing"));
+        assert!(trie.contains("bong"));
+        assert!(trie.contains("bin"));
+        assert!(trie.contains("asd"));
+        assert!(!trie.contains("asdf"));
+        assert!(!trie.contains("bi"));
+        assert!(!trie.contains(""));
     }
 }

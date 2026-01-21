@@ -19,7 +19,7 @@ fn lev_automaton_bench(c: &mut Criterion) {
         let spell_checker = SpellChecker::new(trie.clone(), |word, trie| {
             let aut = LevenshteinAutomaton::new(word, degree);
             let aut: LevenshteinAutomaton<Deterministic> = aut.into();
-            aut.get_automaton().intersect(&trie.get_automaton())
+            trie.filter(aut.get_automaton())
         });
 
         group.bench_function(format!("degree: {degree}"), |b| {

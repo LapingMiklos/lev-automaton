@@ -20,7 +20,7 @@ where
     }
 
     pub fn check_word(&self, word: &str) -> Result<(), Vec<String>> {
-        if self.trie.constains(word) {
+        if self.trie.contains(word) {
             Ok(())
         } else {
             Err((self.correction_func)(word, &self.trie))

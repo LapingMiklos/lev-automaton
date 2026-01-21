@@ -81,7 +81,7 @@ mod test {
     const FOOD_LEV_4: [&str; 6] = ["", "****", "f***.", "***.d", "***d.", "**o*."];
 
     #[test]
-    fn test_0th_degree_lev_autamata() {
+    fn test_0th_degree_lev_automata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 0);
 
         assert!(lev_aut.0.recognizes(FOOD));
@@ -92,7 +92,7 @@ mod test {
     }
 
     #[test]
-    fn test_1st_degree_lev_autamata() {
+    fn test_1st_degree_lev_automata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 1);
 
         assert!(lev_aut.0.recognizes(FOOD));
@@ -107,7 +107,7 @@ mod test {
     }
 
     #[test]
-    fn test_2nd_degree_lev_autamata() {
+    fn test_2nd_degree_lev_automata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 2);
 
         assert!(lev_aut.0.recognizes(FOOD));
@@ -126,7 +126,7 @@ mod test {
     }
 
     #[test]
-    fn test_3rd_degree_lev_autamata() {
+    fn test_3rd_degree_lev_automata() {
         let lev_aut = LevenshteinAutomaton::new(FOOD, 3);
 
         assert!(lev_aut.0.recognizes(FOOD));
@@ -149,7 +149,7 @@ mod test {
     }
 
     #[test]
-    fn test_0th_degree_det_lev_autamata() {
+    fn test_0th_degree_det_lev_automata() {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 0).into();
 
@@ -161,7 +161,7 @@ mod test {
     }
 
     #[test]
-    fn test_1st_degree_det_lev_autamata() {
+    fn test_1st_degree_det_lev_automata() {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 1).into();
 
@@ -177,7 +177,7 @@ mod test {
     }
 
     #[test]
-    fn test_2nd_degree_det_lev_autamata() {
+    fn test_2nd_degree_det_lev_automata() {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 2).into();
 
@@ -197,7 +197,7 @@ mod test {
     }
 
     #[test]
-    fn test_3rd_degree_det_lev_autamata() {
+    fn test_3rd_degree_det_lev_automata() {
         let lev_aut: LevenshteinAutomaton<Deterministic> =
             LevenshteinAutomaton::new(FOOD, 3).into();
 

@@ -14,14 +14,14 @@ fn main() {
     let words: Vec<(String, String)> = serde_json::from_reader(&mut words_file).unwrap();
     let words: Vec<_> = words
         .into_iter()
-        .filter(|(_, correct)| trie.constains(correct))
+        .filter(|(_, correct)| trie.contains(correct))
         .collect();
 
     for degree in 1..=3 {
         let spell_checker = SpellChecker::new(trie.clone(), |word, trie| {
             let aut = LevenshteinAutomaton::new(word, degree);
             let aut: LevenshteinAutomaton<Deterministic> = aut.into();
-            aut.get_automaton().intersect(trie.get_automaton())
+            trie.filter(aut.get_automaton())
         });
 
         let mut unambiguous_corrections = 0;

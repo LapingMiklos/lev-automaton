@@ -63,12 +63,14 @@ impl Transition {
 
 #[derive(Debug, Clone)]
 pub struct State {
-    transtions: Vec<(Transition, StateId)>,
+    transitions: Vec<(Transition, StateId)>,
 }
 
 impl State {
     const fn new() -> Self {
-        Self { transtions: vec![] }
+        Self {
+            transitions: vec![],
+        }
     }
 }
 
@@ -130,7 +132,7 @@ impl<T> Automaton<T> {
         P: Fn(&Transition) -> bool,
     {
         self[from]
-            .transtions
+            .transitions
             .iter()
             .filter(move |(transition, _)| pred(transition))
             .map(|(_, to)| *to)
@@ -139,7 +141,7 @@ impl<T> Automaton<T> {
 
 impl Automaton<NonDeterministic> {
     pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) {
-        self[from].transtions.push((transition, to));
+        self[from].transitions.push((transition, to));
     }
 
     pub fn recognizes(&self, word: &str) -> bool {
@@ -205,7 +207,7 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                 .iter()
                 .flat_map(|s| {
                     nfa[*s]
-                        .transtions
+                        .transitions
                         .iter()
                         .filter_map(|(transition, _)| match transition {
                             Transition::Is(c) => Some(*c),
@@ -223,12 +225,14 @@ impl From<Automaton<NonDeterministic>> for Automaton<Deterministic> {
                 if reachable_states.is_empty() {
                     continue;
                 }
-                let reachabe_states = nfa.eps_closure(reachable_states);
+                let reachable_states = nfa.eps_closure(reachable_states);
                 let dfa_to: StateId =
-                    *state_map.entry(reachabe_states.clone()).or_insert_with(|| {
-                        state_stack.push(reachabe_states);
-                        dfa.add_state()
-                    });
+                    *state_map
+                        .entry(reachable_states.clone())
+                        .or_insert_with(|| {
+                            state_stack.push(reachable_states);
+                            dfa.add_state()
+                        });
 
                 let added_transition = dfa.add_transition(dfa_from, dfa_to, Transition::Is(*c));
                 debug_assert!(added_transition)
@@ -272,9 +276,9 @@ impl Automaton<Deterministic> {
             other.start.unwrap_or(StateId(0)),
         )];
         while let Some((word, self_state, other_state)) = stack.pop() {
-            for (self_transition, new_self_state) in &self[self_state].transtions {
-                for (other_transtion, new_other_state) in &other[other_state].transtions {
-                    if let Some(char) = self_transition.merge(other_transtion) {
+            for (self_transition, new_self_state) in &self[self_state].transitions {
+                for (other_transition, new_other_state) in &other[other_state].transitions {
+                    if let Some(char) = self_transition.merge(other_transition) {
                         let mut new_word = word.clone();
                         new_word.push(char);
 
@@ -295,14 +299,14 @@ impl Automaton<Deterministic> {
     #[must_use]
     pub fn add_transition(&mut self, from: StateId, to: StateId, transition: Transition) -> bool {
         if self[from]
-            .transtions
+            .transitions
             .iter()
             .any(|(t, _)| t.have_overlap(&transition))
         {
             return false;
         }
 
-        self[from].transtions.push((transition, to));
+        self[from].transitions.push((transition, to));
         true
     }
 
@@ -315,7 +319,7 @@ impl Automaton<Deterministic> {
 
         for c in word.chars() {
             let transitions: Vec<_> = self[active_state]
-                .transtions
+                .transitions
                 .iter()
                 .filter(|(transition, _)| transition.allows(c))
                 .map(|(_, to)| to)
